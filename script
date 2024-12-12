@@ -1,0 +1,85 @@
+-- Add these services at the top of your existing script
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Add these variables with your existing variables
+local autoPunchEnabled = false
+local lastPunchTime = 0
+local punchCooldown = 0.5  -- Adjust cooldown as needed
+
+-- Add this function to your existing script
+local function autoPunch()
+    if not autoPunchEnabled then return end
+    
+    local currentTime = tick()
+    if currentTime - lastPunchTime >= punchCooldown then
+        -- Simulate a punch
+        VirtualUser:Button1Down(Vector2.new(0,0))
+        wait(0.1)
+        VirtualUser:Button1Up(Vector2.new(0,0))
+        
+        lastPunchTime = currentTime
+    end
+end
+
+-- Add an Auto Punch button to your existing GUI creation section
+local autoPunchButton = Instance.new("TextButton", frame)
+autoPunchButton.Size = UDim2.new(0, 80, 0, 30)
+autoPunchButton.Position = UDim2.new(0, 10, 0, 210)
+autoPunchButton.Text = "Auto Punch: Off"
+autoPunchButton.BackgroundColor3 = Color3.new(1, 0, 0)  -- Red color initially
+
+-- Add button functionality to toggle auto punch
+autoPunchButton.MouseButton1Click:Connect(function()
+    autoPunchEnabled = not autoPunchEnabled
+    
+    if autoPunchEnabled then
+        autoPunchButton.Text = "Auto Punch: On"
+        autoPunchButton.BackgroundColor3 = Color3.new(0, 1, 0)  -- Green when on
+    else
+        autoPunchButton.Text = "Auto Punch: Off"
+        autoPunchButton.BackgroundColor3 = Color3.new(1, 0, 0)  -- Red when off
+    end
+end)
+
+-- Modify your existing RunService.Stepped connection to include auto punch
+RunService.Stepped:Connect(function()
+    if tpActive and userTapped then
+        teleportToPlayer()
+        userTapped = false
+    elseif active then
+        avoidPlayers()
+    end
+    
+    -- Add auto punch to the Stepped event
+    autoPunch()
+end)
+
+-- Optional: Add a punch cooldown adjustment
+local punchCooldownLabel = Instance.new("TextLabel", frame)
+punchCooldownLabel.Size = UDim2.new(0, 100, 0, 30)
+punchCooldownLabel.Position = UDim2.new(0, 10, 0, 250)
+punchCooldownLabel.Text = "Punch Cooldown: " .. punchCooldown
+
+local punchCooldownPlus = Instance.new("TextButton", frame)
+punchCooldownPlus.Size = UDim2.new(0, 30, 0, 30)
+punchCooldownPlus.Position = UDim2.new(0, 120, 0, 250)
+punchCooldownPlus.Text = "+"
+
+local punchCooldownMinus = Instance.new("TextButton", frame)
+punchCooldownMinus.Size = UDim2.new(0, 30, 0, 30)
+punchCooldownMinus.Position = UDim2.new(0, 160, 0, 250)
+punchCooldownMinus.Text = "-"
+
+-- Add cooldown adjustment functionality
+punchCooldownPlus.MouseButton1Click:Connect(function()
+    punchCooldown = math.min(2, punchCooldown + 0.1)
+    punchCooldownLabel.Text = "Punch Cooldown: " .. string.format("%.1f", punchCooldown)
+end)
+
+punchCooldownMinus.MouseButton1Click:Connect(function()
+    punchCooldown = math.max(0.1, punchCooldown - 0.1)
+    punchCooldownLabel.Text = "Punch Cooldown: " .. string.format("%.1f", punchCooldown)
+end)
